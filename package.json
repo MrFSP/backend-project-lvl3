@@ -1,0 +1,51 @@
+{
+  "name": "backend-project-lvl3",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "bin": {
+    "page-loader": "dist/bin/page-loader.js"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrFSP/backend-project-lvl3.git"
+  },
+  "author": "Pavel Egorov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MrFSP/backend-project-lvl3/issues"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "homepage": "https://github.com/MrFSP/backend-project-lvl3#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.8.3",
+    "@babel/core": "^7.8.3",
+    "@babel/node": "^7.8.3",
+    "@babel/plugin-proposal-pipeline-operator": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
+    "babel-eslint": "^10.0.3",
+    "babel-jest": "^25.1.0",
+    "debug": "^4.1.1",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jest": "^23.6.0",
+    "jest": "^25.1.0",
+    "jest-cli": "^25.1.0",
+    "nock": "^12.0.3"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "commander": "^4.1.0",
+    "lodash": "^4.17.15",
+    "source-map-support": "^0.5.16"
+  }
+}
