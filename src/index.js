@@ -1,4 +1,5 @@
 import axios from 'axios';
+import debug from 'debug';
 import cheerio from 'cheerio';
 import path from 'path';
 import { promises as fs, createWriteStream } from 'fs';
