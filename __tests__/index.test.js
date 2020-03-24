@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import nock from 'nock';
+import debug from 'debug';
 import os from 'os';
 import path from 'path';
 import _ from 'lodash';
@@ -7,6 +8,8 @@ import loadPage from '../src';
 import { createName } from '../src/utils';
 
 nock.disableNetConnect();
+
+const log = debug('tests:');
 
 const origin = 'https://testpage.ru';
 
@@ -46,7 +49,7 @@ beforeAll(async () => {
     img: await fs.readFile(getPathFixture(urls.img)),
   };
 
-  typesOfResources.forEach((type) => nock(urls[type].origin)
+  typesOfResources.forEach((type) => nock(urls.root.toString())
     // .log(console.log)
     .get(urls[type].pathname)
     .reply(200, fixtureData[type])
@@ -65,18 +68,15 @@ afterEach(async () => {
   await fs.rmdir(pathToTempDir, { recursive: true });
 });
 
-test.each(typesOfResources)('%# %j loaded from https://testpage.ru',
+test.each(typesOfResources)('%# test %j',
   async (type) => {
-    await loadPage(origin, pathToTempDir);
+    log('page-loader testing started');
+    await loadPage(urls.root.toString(), pathToTempDir);
     const isRootURL = type === 'root';
     const pathToLoadedDir = isRootURL ? pathToLoadedHTML : pathToTempDirWithFiles;
     const pathToLoadedFile = path
       .join(pathToLoadedDir, isRootURL ? '' : createName(urls[type].pathname));
     const loadedData = await fs.readFile(pathToLoadedFile, 'utf-8');
     expect(loadedData).toEqual(isRootURL ? changedHTMLData : fixtureData[type].toString());
+    log(`"${urls[type].href}" loading tested\ntest completed\n`);
   });
-
-test('Control test', () => {
-  expect(true).toBe(true);
-  console.log('Control test done!');
-});

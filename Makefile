@@ -20,7 +20,10 @@ build:
 	npm run build
 
 test:
-	npm test
+	DEBUG=axios,page-loader:,tests: npm test
+
+watch:
+	DEBUG=axios,page-loader:,tests: npx jest --watch
 
 republish:
 	sudo npm uninstall -g gendiff

@@ -62,22 +62,6 @@ $ open /var/tmp/hexlet-io-courses.html
 
 ### Демонстрации:
 
-#### Step 1
+#### Testing with logs
 
-
-
-#### Step 2
-
-
-
-#### Step 3:
-
-
-
-#### Step 4:
-
-
-
-#### Step 5:
-
-
+[![asciicast](https://asciinema.org/a/312987.svg)](https://asciinema.org/a/312987)

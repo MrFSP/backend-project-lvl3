@@ -1,9 +1,12 @@
 import axios from 'axios';
+import 'axios-debug-log';
 import debug from 'debug';
 import cheerio from 'cheerio';
 import path from 'path';
 import { promises as fs, createWriteStream } from 'fs';
 import { createName } from './utils';
+
+const log = debug('page-loader:');
 
 const properties = [['link', 'href'], ['script', 'src'], ['img', 'src']];
 
@@ -12,7 +15,7 @@ let dirNameForFiles;
 let HTMLContent;
 let pathToDirWithHTMLResourses;
 let counterForEmptyNameFiles = 1;
-const urls = [];
+let urls = [];
 
 const loadData = (url) => axios({
   method: 'get',
@@ -24,6 +27,7 @@ const loadData = (url) => axios({
     const resultFileName = fileName !== '' ? fileName : `file${counterForEmptyNameFiles}`;
     counterForEmptyNameFiles += 1;
     const pathToFile = path.join(pathToDirWithHTMLResourses, resultFileName);
+    log(`streaming ${url.href}`);
     response.data.pipe(createWriteStream(pathToFile));
   });
 
@@ -40,6 +44,7 @@ export default (url, pathToFile = process.cwd()) => Promise
   })
   .then(() => {
     const $ = cheerio.load(HTMLContent);
+    const urlsList = [];
     properties.forEach(([tag, attribute]) => {
       $(tag).each((i, elem) => {
         const link = $(elem).attr(attribute);
@@ -48,14 +53,17 @@ export default (url, pathToFile = process.cwd()) => Promise
           const newLink = path.join(dirNameForFiles, createName(currentURL.pathname));
           $(elem).attr(attribute, newLink);
         }
-        return currentURL ? urls.push(currentURL) : null;
+        return currentURL ? urlsList.push(currentURL) : null;
       });
     });
+    urls = urlsList;
     HTMLContent = $.html();
   })
   .then(() => urls.forEach((currentURL) => loadData(currentURL)))
   .then(() => fs.writeFile(pathToHTML, HTMLContent))
-  .then(() => console.log(`Page loaded and saved to file ${pathToHTML}`))
+  .then(() => {
+    log(`${url} loaded`);
+  })
   .catch((e) => {
     console.error(e);
   });
