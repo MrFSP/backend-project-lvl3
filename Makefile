@@ -4,10 +4,13 @@ help:
 	npx babel-node src/bin/page-loader.js -h
 
 start1:
-	npx babel-node src/bin/page-loader.js --output /home/mrfsp/projects/backend-project-lvl3/tmp/ https://ru.hexlet.io/courses
+	npx babel-node src/bin/page-loader.js --output tmp https://expange.ru/
 
 start2:
-	npx babel-node src/bin/page-loader.js https://ru.hexlet.io/courses
+	npx babel-node src/bin/page-loader.js https://fonwall.ru
+
+start3:
+	npx babel-node src/bin/page-loader.js view-source:file:///Users/pavelegorov/projects/backend-project-lvl3/__tests__/__fixtures__/expected.test.html
 
 install-deps:
 	npm ci

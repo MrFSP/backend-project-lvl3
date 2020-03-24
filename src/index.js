@@ -1,19 +1,60 @@
 import axios from 'axios';
-import { promises as fs } from 'fs';
-import { getFileName, createDirPath } from './utils';
+import cheerio from 'cheerio';
+import path from 'path';
+import { promises as fs, createWriteStream } from 'fs';
+import { createName } from './utils';
 
-let completePath;
+const properties = [['link', 'href'], ['script', 'src'], ['img', 'src']];
+
+let pathToHTML;
+let dirNameForFiles;
+let HTMLContent;
+let pathToDirWithHTMLResourses;
+let counterForEmptyNameFiles = 1;
+const urls = [];
+
+const loadData = (url) => axios({
+  method: 'get',
+  url: url.href,
+  responseType: 'stream',
+})
+  .then((response) => {
+    const fileName = createName(url.pathname);
+    const resultFileName = fileName !== '' ? fileName : `file${counterForEmptyNameFiles}`;
+    counterForEmptyNameFiles += 1;
+    const pathToFile = path.join(pathToDirWithHTMLResourses, resultFileName);
+    response.data.pipe(createWriteStream(pathToFile));
+  });
 
 export default (url, pathToFile = process.cwd()) => Promise
   .all([axios.get(url), fs.stat(pathToFile)])
   .then(([response, stats]) => {
-    const fileName = getFileName(url, '.html');
-    const HTMLcontent = response.data;
-    const dirPath = stats.isDirectory() ? pathToFile : createDirPath(pathToFile);
-    completePath = `${dirPath}/${fileName}`;
-    fs.writeFile(completePath, HTMLcontent);
+    const HTMLFileName = createName(url, '.html');
+    const pathToDirWithHTML = stats.isDirectory() ? pathToFile : path.join(__dirname, '..', pathToFile);
+    pathToHTML = `${pathToDirWithHTML}/${HTMLFileName}`;
+    HTMLContent = response.data;
+    dirNameForFiles = createName(url, '_files');
+    pathToDirWithHTMLResourses = path.join(pathToDirWithHTML, dirNameForFiles);
+    fs.mkdir(pathToDirWithHTMLResourses);
   })
-  .then(() => console.log(`Page uploaded and saved to file ${completePath}`))
-  .catch((error) => {
-    console.log(error);
+  .then(() => {
+    const $ = cheerio.load(HTMLContent);
+    properties.forEach(([tag, attribute]) => {
+      $(tag).each((i, elem) => {
+        const link = $(elem).attr(attribute);
+        const currentURL = link ? new URL(link, url) : null;
+        if (currentURL) {
+          const newLink = path.join(dirNameForFiles, createName(currentURL.pathname));
+          $(elem).attr(attribute, newLink);
+        }
+        return currentURL ? urls.push(currentURL) : null;
+      });
+    });
+    HTMLContent = $.html();
+  })
+  .then(() => urls.forEach((currentURL) => loadData(currentURL)))
+  .then(() => fs.writeFile(pathToHTML, HTMLContent))
+  .then(() => console.log(`Page loaded and saved to file ${pathToHTML}`))
+  .catch((e) => {
+    console.error(e);
   });

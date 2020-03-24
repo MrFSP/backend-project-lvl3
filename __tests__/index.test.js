@@ -3,39 +3,80 @@ import nock from 'nock';
 import os from 'os';
 import path from 'path';
 import _ from 'lodash';
-import load from '../src';
-import { getFileName } from '../src/utils';
+import loadPage from '../src';
+import { createName } from '../src/utils';
 
 nock.disableNetConnect();
 
-const domain = 'https://ru.hexlet.io';
-const page = '/courses';
-const url = `${domain}${page}`;
+const origin = 'https://testpage.ru';
 
-const getFixturePath = (name) => path.join(__dirname, '__fixtures__', name);
-const pathToFixture = getFixturePath('expected.ru-hexlet-io-courses.html');
+const dirNameForFiles = createName(origin, '_files');
 
-let expectedData;
+const urls = {
+  root: new URL('https://testpage.ru'),
+  script: new URL('https://testpage.ru/script'),
+  link: new URL('https://testpage.ru/href/file.css'),
+  img: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
+};
+
+const typesOfResources = Object.keys(urls);
+
+let fixtureData;
 let pathToTempDir;
-let dest;
+let pathToLoadedHTML;
+let pathToTempDirWithFiles;
+let changedHTMLData;
+
+const createPathToFixture = (...args) => path.join(__dirname, '__fixtures__', args.join('/'));
+
+const getPathFixture = (url) => {
+  const isRootURL = url.pathname === '/';
+  const pathname = !isRootURL ? url.pathname : url.origin;
+  const fileName = createName(pathname, !isRootURL ? '' : '.html');
+  return createPathToFixture(!isRootURL ? dirNameForFiles : '', fileName);
+};
 
 beforeAll(async () => {
-  expectedData = await fs.readFile(pathToFixture, 'utf-8').toString();
-  nock(domain)
-    .log(console.log)
-    .get(page)
-    .reply(200, expectedData);
+  const pathToChangedHTML = createPathToFixture('changed-testpage-ru.html');
+  changedHTMLData = await fs.readFile(pathToChangedHTML, 'utf-8');
+  fixtureData = {
+    root: await fs.readFile(getPathFixture(urls.root)),
+    script: await fs.readFile(getPathFixture(urls.script)),
+    link: await fs.readFile(getPathFixture(urls.link)),
+    img: await fs.readFile(getPathFixture(urls.img)),
+  };
+
+  typesOfResources.forEach((type) => nock(urls[type].origin)
+    // .log(console.log)
+    .get(urls[type].pathname)
+    .reply(200, fixtureData[type])
+    .persist());
 });
 
 beforeEach(async () => {
-  await fs.unlink(dest).catch(_.noop);
-  const filename = getFileName(url, '.html');
+  await fs.unlink(pathToTempDir).catch(_.noop);
+  const filename = createName(origin, '.html');
   pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  dest = `${pathToTempDir}/${filename}`;
+  pathToLoadedHTML = path.join(pathToTempDir, filename);
+  pathToTempDirWithFiles = path.join(pathToTempDir, dirNameForFiles);
 });
 
-test('load', async () => {
-  await load(url, pathToTempDir);
-  const loadedData = await fs.readFile(dest, 'utf-8');
-  await expect(loadedData).toBe(expectedData);
+afterEach(async () => {
+  await fs.rmdir(pathToTempDir, { recursive: true });
+});
+
+test.each(typesOfResources)('%# %j loaded from https://testpage.ru',
+  async (type) => {
+    await loadPage(origin, pathToTempDir);
+    const isRootURL = type === 'root';
+    const pathToLoadedDir = isRootURL ? pathToLoadedHTML : pathToTempDirWithFiles;
+    const pathToLoadedFile = path
+      .join(pathToLoadedDir, isRootURL ? '' : createName(urls[type].pathname));
+    const loadedData = await fs.readFile(pathToLoadedFile, 'utf-8');
+    expect(loadedData).toEqual(isRootURL ? changedHTMLData : fixtureData[type].toString());
+  });
+
+test('Control test', () => {
+  expect(true).toBe(true);
+  console.log('Control test done!');
 });
