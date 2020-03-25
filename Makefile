@@ -12,6 +12,12 @@ start2:
 start3:
 	npx babel-node src/bin/page-loader.js view-source:file:///Users/pavelegorov/projects/backend-project-lvl3/__tests__/__fixtures__/expected.test.html
 
+start4:
+	npx babel-node src/bin/page-loader.js https://ru.hexlet.io
+
+start5:
+	DEBUG=axios,page-loader:,tests: npx babel-node src/bin/page-loader.js https://ru.hexlet.io
+
 install-deps:
 	npm ci
 
@@ -20,7 +26,7 @@ build:
 	npm run build
 
 test:
-	DEBUG=axios,page-loader:,tests: npm test
+	DEBUG=axios,page-loader:,tests: npm test -- -u
 
 watch:
 	DEBUG=axios,page-loader:,tests: npx jest --watch

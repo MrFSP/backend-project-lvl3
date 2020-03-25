@@ -62,6 +62,14 @@ $ open /var/tmp/hexlet-io-courses.html
 
 ### Демонстрации:
 
-#### Testing with logs
+#### Загрузка страницы
 
-[![asciicast](https://asciinema.org/a/312987.svg)](https://asciinema.org/a/312987)
+[![asciicast](https://asciinema.org/a/313018.svg)](https://asciinema.org/a/313018)
+
+#### Загрузка страницы с логами
+
+[![asciicast](https://asciinema.org/a/313322.svg)](https://asciinema.org/a/313322)
+
+#### Загрузка страницы с обработкой ошибок
+
+[![asciicast](https://asciinema.org/a/313323.svg)](https://asciinema.org/a/313323)

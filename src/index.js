@@ -10,14 +10,34 @@ const log = debug('page-loader:');
 
 const properties = [['link', 'href'], ['script', 'src'], ['img', 'src']];
 
-let pathToHTML;
-let dirNameForFiles;
-let HTMLContent;
-let pathToDirWithHTMLResourses;
 let counterForEmptyNameFiles = 1;
-let urls = [];
 
-const loadData = (url) => axios({
+const processHTML = (url, pathToFile, response, stats) => {
+  const HTMLFileName = createName(url, '.html');
+  const pathToDirWithHTML = stats.isDirectory() ? pathToFile : path.join(__dirname, '..', pathToFile);
+  const pathToHTML = `${pathToDirWithHTML}/${HTMLFileName}`;
+  const dirNameForFiles = createName(url, '_files');
+  const pathToDirWithHTMLResourses = path.join(pathToDirWithHTML, dirNameForFiles);
+  fs.mkdir(pathToDirWithHTMLResourses).catch((e) => console.error(e.message));
+  const HTMLContent = response.data;
+  const $ = cheerio.load(HTMLContent);
+  const urls = [];
+  properties.forEach(([tag, attribute]) => {
+    $(tag).each((i, elem) => {
+      const link = $(elem).attr(attribute);
+      const currentURL = link ? new URL(link, url) : null;
+      if (currentURL) {
+        const newLink = path.join(dirNameForFiles, createName(currentURL.pathname));
+        $(elem).attr(attribute, newLink);
+      }
+      return currentURL ? urls.push(currentURL) : null;
+    });
+  });
+  const changedHTML = $.html();
+  return [changedHTML, urls, pathToHTML, pathToDirWithHTMLResourses];
+};
+
+const loadData = (url, pathToDirWithHTMLResourses) => axios({
   method: 'get',
   url: url.href,
   responseType: 'stream',
@@ -29,41 +49,22 @@ const loadData = (url) => axios({
     const pathToFile = path.join(pathToDirWithHTMLResourses, resultFileName);
     log(`streaming ${url.href}`);
     response.data.pipe(createWriteStream(pathToFile));
-  });
+  })
+  .catch((e) => console.error(e.message));
 
 export default (url, pathToFile = process.cwd()) => Promise
   .all([axios.get(url), fs.stat(pathToFile)])
-  .then(([response, stats]) => {
-    const HTMLFileName = createName(url, '.html');
-    const pathToDirWithHTML = stats.isDirectory() ? pathToFile : path.join(__dirname, '..', pathToFile);
-    pathToHTML = `${pathToDirWithHTML}/${HTMLFileName}`;
-    HTMLContent = response.data;
-    dirNameForFiles = createName(url, '_files');
-    pathToDirWithHTMLResourses = path.join(pathToDirWithHTML, dirNameForFiles);
-    fs.mkdir(pathToDirWithHTMLResourses);
-  })
-  .then(() => {
-    const $ = cheerio.load(HTMLContent);
-    const urlsList = [];
-    properties.forEach(([tag, attribute]) => {
-      $(tag).each((i, elem) => {
-        const link = $(elem).attr(attribute);
-        const currentURL = link ? new URL(link, url) : null;
-        if (currentURL) {
-          const newLink = path.join(dirNameForFiles, createName(currentURL.pathname));
-          $(elem).attr(attribute, newLink);
-        }
-        return currentURL ? urlsList.push(currentURL) : null;
-      });
-    });
-    urls = urlsList;
-    HTMLContent = $.html();
-  })
-  .then(() => urls.forEach((currentURL) => loadData(currentURL)))
-  .then(() => fs.writeFile(pathToHTML, HTMLContent))
+  .then(([response, stats]) => processHTML(url, pathToFile, response, stats))
+  .then(([changedHTML, urls, pathToHTML, pathToDirWithHTMLResourses]) => Promise.all([
+    fs.writeFile(pathToHTML, changedHTML),
+    urls.forEach((currentURL) => loadData(currentURL, pathToDirWithHTMLResourses)),
+  ]))
   .then(() => {
     log(`${url} loaded`);
+    console.log(`Page '${url}' loaded`);
   })
   .catch((e) => {
-    console.error(e);
+    console.error(e.message);
+    log(e.message);
+    throw e;
   });

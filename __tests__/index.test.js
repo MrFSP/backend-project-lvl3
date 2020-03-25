@@ -5,7 +5,7 @@ import os from 'os';
 import path from 'path';
 import _ from 'lodash';
 import loadPage from '../src';
-import { createName } from '../src/utils';
+import { createName, processErrors } from '../src/utils';
 
 nock.disableNetConnect();
 
@@ -20,6 +20,7 @@ const urls = {
   script: new URL('https://testpage.ru/script'),
   link: new URL('https://testpage.ru/href/file.css'),
   img: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
+  // incorrectLink: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
 };
 
 const typesOfResources = Object.keys(urls);
@@ -68,7 +69,7 @@ afterEach(async () => {
   await fs.rmdir(pathToTempDir, { recursive: true });
 });
 
-test.each(typesOfResources)('%# test %j',
+test.each(typesOfResources)('test page-loader: %# test %j',
   async (type) => {
     log('page-loader testing started');
     await loadPage(urls.root.toString(), pathToTempDir);
@@ -77,6 +78,19 @@ test.each(typesOfResources)('%# test %j',
     const pathToLoadedFile = path
       .join(pathToLoadedDir, isRootURL ? '' : createName(urls[type].pathname));
     const loadedData = await fs.readFile(pathToLoadedFile, 'utf-8');
-    expect(loadedData).toEqual(isRootURL ? changedHTMLData : fixtureData[type].toString());
+    await expect(loadedData).toEqual(isRootURL ? changedHTMLData : fixtureData[type].toString());
     log(`"${urls[type].href}" loading tested\ntest completed\n`);
   });
+
+test('test page-loader: underfined output path argument', async () => {
+  await expect(loadPage('https://testpage.ru', 'underfinedPath')).rejects.toMatchSnapshot();
+});
+
+test('test page-loader: reply with status code: 404', async () => {
+  nock(origin)
+    .get('/notFound')
+    .reply(404);
+
+  await expect(loadPage(`${origin}/notFound`)).rejects
+    .toThrow('Request failed with status code 404');
+});
