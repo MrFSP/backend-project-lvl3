@@ -20,7 +20,6 @@ const urls = {
   script: new URL('https://testpage.ru/script'),
   link: new URL('https://testpage.ru/href/file.css'),
   img: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
-  // incorrectLink: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
 };
 
 const typesOfResources = Object.keys(urls);

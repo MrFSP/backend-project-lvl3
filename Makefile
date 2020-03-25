@@ -13,7 +13,7 @@ start3:
 	npx babel-node src/bin/page-loader.js view-source:file:///Users/pavelegorov/projects/backend-project-lvl3/__tests__/__fixtures__/expected.test.html
 
 start4:
-	npx babel-node src/bin/page-loader.js https://ru.hexlet.io
+	npx babel-node src/bin/page-loader.js https://ru.hexlet.io/courses
 
 start5:
 	DEBUG=axios,page-loader:,tests: npx babel-node src/bin/page-loader.js https://ru.hexlet.io

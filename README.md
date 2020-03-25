@@ -73,3 +73,7 @@ $ open /var/tmp/hexlet-io-courses.html
 #### Загрузка страницы с обработкой ошибок
 
 [![asciicast](https://asciinema.org/a/313323.svg)](https://asciinema.org/a/313323)
+
+#### Загрузка страницы со спиннерами
+
+[![asciicast](https://asciinema.org/a/313430.svg)](https://asciinema.org/a/313430)
