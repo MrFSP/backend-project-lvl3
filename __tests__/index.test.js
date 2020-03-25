@@ -5,7 +5,7 @@ import os from 'os';
 import path from 'path';
 import _ from 'lodash';
 import loadPage from '../src';
-import { createName, processErrors } from '../src/utils';
+import { createName } from '../src/utils';
 
 nock.disableNetConnect();
 
