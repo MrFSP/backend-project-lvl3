@@ -4,6 +4,7 @@ import debug from 'debug';
 import cheerio from 'cheerio';
 import path from 'path';
 import Listr from 'listr';
+import _ from 'lodash';
 import { promises as fs, createWriteStream } from 'fs';
 import { createName } from './utils';
 
@@ -33,19 +34,21 @@ const processHTML = (url, pathToFile, response, stats) => {
   HTMLtags.forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
-      const currentURL = link && link !== '/' ? new URL(link, url) : null;
-      if (currentURL) {
-        const newLink = path.join(
-          dirNameForHTMLResouces,
-          createName(currentURL.pathname),
-        );
-        $(elem).attr(attribute, newLink);
+      if (link === undefined || link === '/') {
+        return;
       }
-      return currentURL ? urls.push(currentURL) : null;
+      const currentURL = new URL(link, url);
+      urls.push(currentURL);
+      const newLink = path.join(
+        dirNameForHTMLResouces,
+        createName(currentURL.pathname),
+      );
+      $(elem).attr(attribute, newLink);
     });
   });
   const changedHTML = $.html();
-  return [changedHTML, urls, pathForHTML, pathToDirForHTMLResourses];
+  const filtredURLS = urls.filter((currentURL) => currentURL.pathname !== '/');
+  return [changedHTML, _.uniq(filtredURLS), pathForHTML, pathToDirForHTMLResourses];
 };
 
 const loadData = (url, pathToDir) => axios({
