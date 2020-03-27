@@ -30,25 +30,22 @@ const processHTML = (url, pathToFile, response, stats) => {
   fs.mkdir(pathToDirForHTMLResourses).catch((e) => console.error(e.message));
   const HTMLContent = response.data;
   const $ = cheerio.load(HTMLContent);
-  const urls = [];
+  const links = [];
   HTMLtags.forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
-      if (link === undefined || link === '/') {
-        return;
+      if (link) {
+        const newLink = path.join(dirNameForHTMLResouces, createName(link));
+        $(elem).attr(attribute, newLink);
+        links.push(link);
       }
-      const currentURL = new URL(link, url);
-      urls.push(currentURL);
-      const newLink = path.join(
-        dirNameForHTMLResouces,
-        createName(currentURL.pathname),
-      );
-      $(elem).attr(attribute, newLink);
     });
   });
   const changedHTML = $.html();
-  const filtredURLS = urls.filter((currentURL) => currentURL.pathname !== '/');
-  return [changedHTML, _.uniq(filtredURLS), pathForHTML, pathToDirForHTMLResourses];
+  const urls = _.uniq(links)
+    .filter((link) => link !== '/')
+    .map((link) => new URL(link, url));
+  return [changedHTML, urls, pathForHTML, pathToDirForHTMLResourses];
 };
 
 const loadData = (url, pathToDir) => axios({
