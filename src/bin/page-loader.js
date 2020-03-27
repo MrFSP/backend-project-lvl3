@@ -11,8 +11,9 @@ program
   .arguments('<url>')
   .action((url, option) => {
     loadPage(url, option.output)
+      .then(() => console.log(`Page '${url}' loaded`))
       .catch((e) => {
-        console.log(e.message);
+        console.log(e);
         process.exit(1);
       });
   })

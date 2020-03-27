@@ -17,10 +17,15 @@ const HTMLtags = [
 
 const processHTML = (url, pathToFile, response, stats) => {
   const HTMLFileName = createName(url, '.html');
-  const pathToDirWithHTML = stats.isDirectory() ? pathToFile : path.join(__dirname, '..', pathToFile);
+  const pathToDirWithHTML = stats.isDirectory()
+    ? pathToFile
+    : path.join(__dirname, '..', pathToFile);
   const pathForHTML = `${pathToDirWithHTML}/${HTMLFileName}`;
   const dirNameForHTMLResouces = createName(url, '_files');
-  const pathToDirForHTMLResourses = path.join(pathToDirWithHTML, dirNameForHTMLResouces);
+  const pathToDirForHTMLResourses = path.join(
+    pathToDirWithHTML,
+    dirNameForHTMLResouces,
+  );
   fs.mkdir(pathToDirForHTMLResourses).catch((e) => console.error(e.message));
   const HTMLContent = response.data;
   const $ = cheerio.load(HTMLContent);
@@ -28,9 +33,12 @@ const processHTML = (url, pathToFile, response, stats) => {
   HTMLtags.forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
-      const currentURL = link ? new URL(link, url) : null;
+      const currentURL = link && link !== '/' ? new URL(link, url) : null;
       if (currentURL) {
-        const newLink = path.join(dirNameForHTMLResouces, createName(currentURL.pathname));
+        const newLink = path.join(
+          dirNameForHTMLResouces,
+          createName(currentURL.pathname),
+        );
         $(elem).attr(attribute, newLink);
       }
       return currentURL ? urls.push(currentURL) : null;
@@ -40,14 +48,14 @@ const processHTML = (url, pathToFile, response, stats) => {
   return [changedHTML, urls, pathForHTML, pathToDirForHTMLResourses];
 };
 
-const loadData = (url, pathToDirForHTMLResourses) => axios({
+const loadData = (url, pathToDir) => axios({
   method: 'get',
   url: url.href,
   responseType: 'stream',
 })
   .then((response) => {
     const fileName = createName(url.pathname);
-    const pathToFile = path.join(pathToDirForHTMLResourses, fileName);
+    const pathToFile = path.join(pathToDir, fileName);
     log(`streaming ${url.href}`);
     response.data.pipe(createWriteStream(pathToFile));
   })
@@ -66,11 +74,11 @@ export default (url, pathToFile = process.cwd()) => Promise
   .then(([response, stats]) => processHTML(url, pathToFile, response, stats))
   .then(([changedHTML, urls, pathForHTML, pathToDirForHTMLResourses]) => Promise
     .all([
-      fs.writeFile(pathForHTML, changedHTML), loadHTMLResources(urls, pathToDirForHTMLResourses),
+      fs.writeFile(pathForHTML, changedHTML),
+      loadHTMLResources(urls, pathToDirForHTMLResourses),
     ]))
   .then(() => {
     log(`${url} loaded`);
-    console.log(`Page '${url}' loaded`);
   })
   .catch((e) => {
     console.error(e.message);
