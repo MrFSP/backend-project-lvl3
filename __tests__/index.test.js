@@ -5,91 +5,107 @@ import os from 'os';
 import path from 'path';
 import _ from 'lodash';
 import loadPage from '../src';
-import { createName } from '../src/utils';
 
 nock.disableNetConnect();
 
 const log = debug('tests:');
 
-const origin = 'https://testpage.ru';
-
-const dirNameForFiles = createName(origin, '_files');
-
+const origin = new URL('https://testpage.ru');
 const urls = {
-  root: new URL('https://testpage.ru'),
   script: new URL('https://testpage.ru/script'),
   link: new URL('https://testpage.ru/href/file.css'),
   img: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
 };
 
-const typesOfResources = Object.keys(urls);
+const nameOfHTMLFile = 'testpage-ru.html';
+const nameOfChangedHTMLFile = 'changed-testpage-ru.html';
 
-let fixtureData;
+const tags = Object.keys(urls);
+
+const namesOfFixtureFiles = {
+  script: 'script',
+  link: 'href-file.css',
+  img: 'src-image.jpeg',
+};
+
+const createPathToFixture = (...args) => path.join(
+  __dirname, '__fixtures__', 'testpage-ru_files', args.join('/'),
+);
+
+const pathToHTMLFile = path.join(__dirname, '__fixtures__', nameOfHTMLFile);
+const pathToChangedHTMLFile = path.join(__dirname, '__fixtures__', nameOfChangedHTMLFile);
+const pathsToFixtures = tags
+  .reduce((acc, tag) => ({ ...acc, [tag]: createPathToFixture(namesOfFixtureFiles[tag]) }), {});
+
 let pathToTempDir;
 let pathToLoadedHTML;
 let pathToTempDirWithFiles;
 let changedHTMLData;
-
-const createPathToFixture = (...args) => path.join(__dirname, '__fixtures__', args.join('/'));
-
-const getPathFixture = (url) => {
-  const isRootURL = url.pathname === '/';
-  const pathname = !isRootURL ? url.pathname : url.origin;
-  const fileName = createName(pathname, !isRootURL ? '' : '.html');
-  return createPathToFixture(!isRootURL ? dirNameForFiles : '', fileName);
-};
+let fixturesData;
 
 beforeAll(async () => {
-  const pathToChangedHTML = createPathToFixture('changed-testpage-ru.html');
-  changedHTMLData = await fs.readFile(pathToChangedHTML, 'utf-8');
-  fixtureData = {
-    root: await fs.readFile(getPathFixture(urls.root)),
-    script: await fs.readFile(getPathFixture(urls.script)),
-    link: await fs.readFile(getPathFixture(urls.link)),
-    img: await fs.readFile(getPathFixture(urls.img)),
+  const HTMLData = await fs.readFile(pathToHTMLFile);
+  changedHTMLData = await fs.readFile(pathToChangedHTMLFile);
+  fixturesData = {
+    script: await fs.readFile(pathsToFixtures.script),
+    link: await fs.readFile(pathsToFixtures.link),
+    img: await fs.readFile(pathsToFixtures.img),
   };
+  nock(origin.href)
+  // .log(console.log)
+    .get('/')
+    .reply(200, HTMLData)
+    .persist();
 
-  typesOfResources.forEach((type) => nock(urls.root.toString())
+  tags.forEach((tag) => nock(origin.href)
     // .log(console.log)
-    .get(urls[type].pathname)
-    .reply(200, fixtureData[type])
+    .get(urls[tag].pathname)
+    .reply(200, fixturesData[tag])
     .persist());
 });
 
 beforeEach(async () => {
   await fs.unlink(pathToTempDir).catch(_.noop);
-  const filename = createName(origin, '.html');
   pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  pathToLoadedHTML = path.join(pathToTempDir, filename);
-  pathToTempDirWithFiles = path.join(pathToTempDir, dirNameForFiles);
+  pathToLoadedHTML = path.join(pathToTempDir, nameOfHTMLFile);
+  pathToTempDirWithFiles = path.join(pathToTempDir, 'testpage-ru_files');
 });
 
 afterEach(async () => {
   await fs.rmdir(pathToTempDir, { recursive: true });
 });
 
-test.each(typesOfResources)('test page-loader: %# test %j',
-  async (type) => {
-    log('page-loader testing started');
-    await loadPage(urls.root.toString(), pathToTempDir);
-    const isRootURL = type === 'root';
-    const pathToLoadedDir = isRootURL ? pathToLoadedHTML : pathToTempDirWithFiles;
-    const pathToLoadedFile = path
-      .join(pathToLoadedDir, isRootURL ? '' : createName(urls[type].pathname));
-    const loadedData = await fs.readFile(pathToLoadedFile, 'utf-8');
-    await expect(loadedData).toEqual(isRootURL ? changedHTMLData : fixtureData[type].toString());
-    log(`"${urls[type].href}" loading tested\ntest completed\n`);
+describe('test page-loader', () => {
+  test('load origin', async () => {
+    log('test page-loader: origin loading: testing started');
+    await loadPage(origin.href, pathToTempDir);
+    const loadedData = await fs.readFile(pathToLoadedHTML, 'utf-8');
+    await expect(loadedData).toEqual(changedHTMLData.toString());
+    log('test page-loader: origin loading: testing completed');
   });
 
-test('test page-loader: underfined output path argument', async () => {
-  await expect(loadPage('https://testpage.ru', 'underfinedPath')).rejects.toMatchSnapshot();
-});
+  test.each(tags)('%#. load %j',
+    async (tag) => {
+      log(`test page-loader: "${tag}" loading: testing started`);
+      await loadPage(origin.href, pathToTempDir);
+      const pathToLoadedFile = path.join(pathToTempDirWithFiles, namesOfFixtureFiles[tag]);
+      const loadedData = await fs.readFile(pathToLoadedFile, 'utf-8');
+      await expect(loadedData).toEqual(fixturesData[tag].toString());
+      log(`test page-loader: "${tag}" loading: testing completed`);
+    });
 
-test('test page-loader: reply with status code: 404', async () => {
-  nock(origin)
-    .get('/notFound')
-    .reply(404);
+  test('"underfined" output path argument', async () => {
+    await expect(loadPage(origin.href, 'underfinedPath')).rejects.toMatchSnapshot();
+    log('test page-loader: "underfined" output path argument: testing completed');
+  });
 
-  await expect(loadPage(`${origin}/notFound`)).rejects
-    .toThrow('Request failed with status code 404');
+  test('reply with status code 404', async () => {
+    nock(origin.href)
+      .get('/notFound')
+      .reply(404);
+
+    await expect(loadPage(`${origin.href}notFound`)).rejects
+      .toThrow('Request failed with status code 404');
+    log('test page-loader: reply with status code 404: testing completed');
+  });
 });

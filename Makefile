@@ -4,21 +4,12 @@ help:
 	npx babel-node src/bin/page-loader.js -h
 
 start1:
-	npx babel-node src/bin/page-loader.js --output tmp https://expange.ru/
-
-start2:
-	npx babel-node src/bin/page-loader.js https://fonwall.ru
-
-start3:
-	npx babel-node src/bin/page-loader.js view-source:file:///Users/pavelegorov/projects/backend-project-lvl3/__tests__/__fixtures__/expected.test.html
-
-start4:
 	npx babel-node src/bin/page-loader.js https://ru.hexlet.io
 
-start5:
+start2:
 	DEBUG=page-loader: npx babel-node src/bin/page-loader.js https://ru.hexlet.io
 
-start6:
+start3:
 	DEBUG=* npx babel-node src/bin/page-loader.js https://ru.hexlet.io
 
 install-deps:
@@ -29,10 +20,16 @@ build:
 	npm run build
 
 test:
+	npm test -- -u
+
+test1:
 	DEBUG=axios,page-loader:,tests: npm test -- -u
 
 watch:
-	DEBUG=axios,page-loader:,tests: npx jest --watch
+	npx jest --watch -u
+
+watch1:
+	DEBUG_COLORS=axios,page-loader:,tests: npx jest --watch -u
 
 republish:
 	sudo npm uninstall -g gendiff
