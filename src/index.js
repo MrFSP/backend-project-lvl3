@@ -20,14 +20,12 @@ let pathForHTML;
 let dirNameForHTMLResouces;
 let pathToDirForHTMLResourses;
 
-const loadData = (url, pathToDir) => axios({
+const loadData = (url, pathToFile) => axios({
   method: 'get',
   url: url.href,
   responseType: 'stream',
 })
   .then((response) => {
-    const fileName = createName(url.pathname);
-    const pathToFile = path.join(pathToDir, fileName);
     log(`streaming ${url.href}`);
     response.data.pipe(createWriteStream(pathToFile));
   })
@@ -36,7 +34,11 @@ const loadData = (url, pathToDir) => axios({
 const loadHTMLResources = (urls) => {
   const tasks = urls.map((currentURL) => ({
     title: currentURL.href,
-    task: () => loadData(currentURL, pathToDirForHTMLResourses),
+    task: () => {
+      const fileName = createName(currentURL.pathname);
+      const pathToFile = path.join(pathToDirForHTMLResourses, fileName);
+      loadData(currentURL, pathToFile);
+    },
   }));
   new Listr(tasks, { concurrent: true, exitOnError: false }).run();
 };
