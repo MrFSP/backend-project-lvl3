@@ -32,7 +32,6 @@ const createPathToFixture = (name) => path.join(__dirname, '__fixtures__', 'test
 
 const pathToHTMLFile = path.join(__dirname, '__fixtures__', nameOfHTMLFile);
 const pathToChangedHTMLFile = path.join(__dirname, '__fixtures__', nameOfChangedHTMLFile);
-const pathToSnapshots = path.join(__dirname, '__snapshots__');
 const pathsToFixtures = tags
   .reduce((acc, tag) => ({ ...acc, [tag]: createPathToFixture(namesOfFixtureFiles[tag]) }), {});
 
@@ -72,7 +71,6 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await fs.rmdir(pathToTempDir, { recursive: true });
-  await fs.rmdir(pathToSnapshots, { recursive: true });
 });
 
 describe('test page-loader', () => {
