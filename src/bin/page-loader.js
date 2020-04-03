@@ -13,7 +13,7 @@ program
     loadPage(url, option.output)
       .then(() => console.log(`Page '${url}' loaded`))
       .catch((e) => {
-        console.log(e);
+        console.error(e);
         process.exit(1);
       });
   })
