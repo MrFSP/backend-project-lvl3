@@ -38,7 +38,7 @@ republish:
 	sudo npm link
 
 test-coverage:
-	npm test -- --coverage
+	npm test -- --coverage -u
 
 lint:
 	npx eslint .
