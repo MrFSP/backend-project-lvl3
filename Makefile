@@ -1,4 +1,8 @@
-install: install-deps
+install:
+	npm install
+	npm run build
+	npm publish --dry-run
+	sudo npm link
 
 help:
 	npx babel-node src/bin/page-loader.js -h
