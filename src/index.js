@@ -44,9 +44,6 @@ const loadData = (url, pathToFile) => axios({
   .then((response) => {
     log(`streaming ${url.href}`);
     response.data.pipe(createWriteStream(pathToFile));
-  })
-  .catch((e) => {
-    throw e;
   });
 
 const loadhtmlResources = (urls) => {
@@ -55,30 +52,25 @@ const loadhtmlResources = (urls) => {
     task: () => {
       const fileName = createName(currentURL.pathname);
       const pathToFile = path.join(pathToDirForhtmlResourses, fileName);
-      loadData(currentURL, pathToFile);
+      return loadData(currentURL, pathToFile);
     },
   }));
-  new Listr(tasks, { concurrent: true, exitOnError: false }).run();
+  return new Listr(tasks, { concurrent: true, exitOnError: false }).run();
 };
 
-export default (url, pathToFile = process.cwd()) => fs.stat(pathToFile)
-  .then((stats) => {
+export default (url, pathToFile = process.cwd()) => axios.get(url)
+  .then((response) => {
     const htmlFileName = createName(url, '.html');
-    const pathToDirWithhtml = stats.isDirectory()
-      ? pathToFile
-      : path.join(__dirname, '..', pathToFile);
-    pathForhtml = `${pathToDirWithhtml}/${htmlFileName}`;
+    pathForhtml = `${pathToFile}/${htmlFileName}`;
     dirNameForhtmlResouces = createName(url, '_files');
-    pathToDirForhtmlResourses = path.join(pathToDirWithhtml, dirNameForhtmlResouces);
+    pathToDirForhtmlResourses = path.join(pathToFile, dirNameForhtmlResouces);
+    return processhtml(url, response.data);
   })
-  .then(() => axios.get(url))
-  .then((response) => processhtml(url, response.data))
   .then(([changedhtml, urls]) => Promise
     .all([
-      fs.writeFile(pathForhtml, changedhtml),
-      fs.mkdir(pathToDirForhtmlResourses).then(loadhtmlResources(urls)),
-    ]))
-  .then(() => log(`${url} loaded`))
-  .catch((e) => {
-    throw e;
-  });
+      fs.writeFile(pathForhtml, changedhtml)
+        .then(() => log(`${url} loaded`)),
+      fs.mkdir(pathToDirForhtmlResourses)
+        .then(() => loadhtmlResources(urls))
+        .then(() => log('Resources loaded')),
+    ]));

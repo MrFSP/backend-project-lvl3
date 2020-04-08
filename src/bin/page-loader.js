@@ -11,10 +11,19 @@ program
   .arguments('<url>')
   .action((url, option) => {
     loadPage(url, option.output)
-      .then(() => console.log(`Page '${url}' loaded`))
+      .then(() => {
+        console.log(`Page '${url}' loaded`);
+      })
       .catch((e) => {
-        console.error(e);
-        process.exit(1);
+        if (e.name === 'ListrError') {
+          if (e.errors[0].errno === -3008) {
+            console.error(`Resource not found. Url: ${e.errors[0].config.url}`);
+          } else {
+            console.error(e.message, e.name);
+          }
+        } else {
+          console.error(e.message);
+        }
       });
   })
   .parse(process.argv);

@@ -8,6 +8,9 @@ help:
 	npx babel-node src/bin/page-loader.js -h
 
 start1:
+	npx babel-node src/bin/page-loader.js --output tmp https://ru.hexlet.io
+
+start11:
 	npx babel-node src/bin/page-loader.js https://ru.hexlet.io
 
 start2:
