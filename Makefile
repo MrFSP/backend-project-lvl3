@@ -11,7 +11,7 @@ start1:
 	npx babel-node src/bin/page-loader.js --output tmp https://ru.hexlet.io
 
 start11:
-	npx babel-node src/bin/page-loader.js https://ru.hexlet.io
+	npx babel-node src/bin/page-loader.js https://fonwall.ru
 
 start2:
 	DEBUG=page-loader: npx babel-node src/bin/page-loader.js https://ru.hexlet.io

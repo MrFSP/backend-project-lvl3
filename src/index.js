@@ -19,21 +19,24 @@ let pathToDirForhtmlResourses;
 const processhtml = (url, htmlContent) => {
   const $ = cheerio.load(htmlContent);
   const links = [];
+  const urls = [];
   Object.entries(htmlTags).forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
+      links.push(link);
       if (link) {
-        const newLink = path.join(dirNameForhtmlResouces, createName(link));
+        const newurl = new URL(link, url);
+        if (newurl.pathname !== '/') {
+          urls.push(newurl);
+        }
+        const newLink = path.join(dirNameForhtmlResouces, createName(newurl.pathname));
         $(elem).attr(attribute, newLink);
         links.push(link);
       }
     });
   });
   const changedhtml = $.html();
-  const urls = _.uniq(links)
-    .filter((link) => link !== '/')
-    .map((link) => new URL(link, url));
-  return [changedhtml, urls];
+  return [changedhtml, _.uniq(urls)];
 };
 
 const loadData = (url, pathToFile) => axios({

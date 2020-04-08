@@ -19,10 +19,8 @@ program
           if (e.errors[0].errno === -3008) {
             console.error(`Resource not found. Url: ${e.errors[0].config.url}`);
           } else {
-            console.error(e.message, e.name);
+            console.error(e);
           }
-        } else {
-          console.error(e.message);
         }
       });
   })
