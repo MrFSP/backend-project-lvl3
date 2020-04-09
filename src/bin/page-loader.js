@@ -18,9 +18,11 @@ program
         if (e.name === 'ListrError') {
           if (e.errors[0].errno === -3008) {
             console.error(`Resource not found. Url: ${e.errors[0].config.url}`);
-          } else {
-            console.error(e);
           }
+        } else if (e.message) {
+          console.error(e.message);
+        } else {
+          console.error(e);
         }
       });
   })

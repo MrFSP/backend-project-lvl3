@@ -71,7 +71,11 @@ export default (url, pathToFile = process.cwd()) => axios.get(url)
   })
   .then(([changedhtml, urls]) => Promise
     .all([
-      fs.writeFile(pathForhtml, changedhtml)
+      new Listr([{
+        title: url,
+        task: () => fs.writeFile(pathForhtml, changedhtml),
+      }])
+        .run()
         .then(() => log(`${url} loaded`)),
       fs.mkdir(pathToDirForhtmlResourses)
         .then(() => loadhtmlResources(urls))
