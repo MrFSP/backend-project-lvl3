@@ -45,7 +45,6 @@ const loadData = (url, pathToFile) => axios({
   responseType: 'stream',
 })
   .then((response) => {
-    log(`streaming ${url.href}`);
     response.data.pipe(createWriteStream(pathToFile));
   });
 
@@ -53,6 +52,7 @@ const loadhtmlResources = (urls) => {
   const tasks = urls.map((currentURL) => ({
     title: currentURL.href,
     task: () => {
+      log(`streaming ${currentURL.href}`);
       const fileName = createName(currentURL.pathname);
       const pathToFile = path.join(pathToDirForhtmlResourses, fileName);
       return loadData(currentURL, pathToFile);
@@ -79,5 +79,5 @@ export default (url, pathToFile = process.cwd()) => axios.get(url)
         .then(() => log(`${url} loaded`)),
       fs.mkdir(pathToDirForhtmlResourses)
         .then(() => loadhtmlResources(urls))
-        .then(() => log('Resources loaded')),
+        .then(() => log('html resources loaded')),
     ]));
