@@ -8,16 +8,16 @@ help:
 	npx babel-node src/bin/page-loader.js -h
 
 start1:
-	npx babel-node src/bin/page-loader.js --output tmp https://ru.hexlet.io
-
-start11:
-	npx babel-node src/bin/page-loader.js https://fonwall.ru
+	npx babel-node src/bin/page-loader.js https://ru.hexlet.io
 
 start2:
+	npx babel-node src/bin/page-loader.js https://fonwall.ru
+
+start1D:
 	DEBUG=page-loader: npx babel-node src/bin/page-loader.js https://ru.hexlet.io
 
-start3:
-	DEBUG=* npx babel-node src/bin/page-loader.js https://ru.hexlet.io
+start2D:
+	DEBUG=page-loader: npx babel-node src/bin/page-loader.js https://fonwall.ru
 
 install-deps:
 	npm ci
@@ -36,7 +36,7 @@ watch:
 	npx jest --watch -u
 
 watch1:
-	DEBUG_COLORS=axios,page-loader:,tests: npx jest --watch -u
+	DEBUG=axios,page-loader:,tests: npx jest --watch -- -u
 
 republish:
 	sudo npm uninstall -g gendiff

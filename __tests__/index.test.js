@@ -28,7 +28,8 @@ const namesOfFixtureFiles = {
   img: 'src-image.jpeg',
 };
 
-const createPathToFixture = (name) => path.join(__dirname, '__fixtures__', 'testpage-ru_files', name);
+const createPathToFixture = (name) => path
+  .join(__dirname, '__fixtures__', 'testpage-ru_files', name);
 
 const pathToHTMLFile = path.join(__dirname, '__fixtures__', nameOfHTMLFile);
 const pathToChangedHTMLFile = path.join(__dirname, '__fixtures__', nameOfChangedHTMLFile);
