@@ -11,6 +11,7 @@ import { createName } from './utils';
 const log = debug('page-loader:');
 
 const htmlTags = { link: 'href', script: 'src', img: 'src' };
+const urlfilters = ['/', '/undefined'];
 
 let pathForhtml;
 let dirNameForhtmlResouces;
@@ -24,20 +25,17 @@ const processhtml = (url, htmlContent) => {
   Object.entries(htmlTags).forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
+      const newurl = new URL(link, url);
+      urls.push(newurl);
+      const newLink = path.join(dirNameForhtmlResouces, createName(newurl.pathname));
+      $(elem).attr(attribute, newLink);
       links.push(link);
-      if (link) {
-        const newurl = new URL(link, url);
-        if (newurl.pathname !== '/') {
-          urls.push(newurl);
-        }
-        const newLink = path.join(dirNameForhtmlResouces, createName(newurl.pathname));
-        $(elem).attr(attribute, newLink);
-        links.push(link);
-      }
     });
   });
+  const filtredurls = _.uniq(urls)
+    .filter((currurl) => !urlfilters.includes(currurl.pathname));
   const changedhtml = $.html();
-  return [changedhtml, _.uniq(urls)];
+  return [changedhtml, filtredurls];
 };
 
 const loadData = (url, pathToFile) => axios({
@@ -50,7 +48,7 @@ const loadData = (url, pathToFile) => axios({
   });
 
 const loadhtmlResources = (urls) => {
-  urls.map((currentURL) => tasksForListr.push({
+  urls.forEach((currentURL) => tasksForListr.push({
     title: currentURL.href,
     task: () => {
       log(`streaming ${currentURL.href}`);
