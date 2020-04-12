@@ -11,7 +11,6 @@ import { createName } from './utils';
 const log = debug('page-loader:');
 
 const htmlTags = { link: 'href', script: 'src', img: 'src' };
-const urlfilters = ['/', '/undefined'];
 
 let pathForhtml;
 let dirNameForhtmlResouces;
@@ -25,6 +24,9 @@ const processhtml = (url, htmlContent) => {
   Object.entries(htmlTags).forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
+      if (link === '/' || !link) {
+        return;
+      }
       const newurl = new URL(link, url);
       urls.push(newurl);
       const newLink = path.join(dirNameForhtmlResouces, createName(newurl.pathname));
@@ -32,10 +34,8 @@ const processhtml = (url, htmlContent) => {
       links.push(link);
     });
   });
-  const filtredurls = _.uniq(urls)
-    .filter((currurl) => !urlfilters.includes(currurl.pathname));
   const changedhtml = $.html();
-  return [changedhtml, filtredurls];
+  return [changedhtml, _.uniq(urls)];
 };
 
 const loadData = (url, pathToFile) => axios({
