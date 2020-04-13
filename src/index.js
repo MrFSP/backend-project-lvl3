@@ -15,7 +15,6 @@ const htmlTags = { link: 'href', script: 'src', img: 'src' };
 let pathForhtml;
 let dirNameForhtmlResouces;
 let pathToDirForhtmlResourses;
-const tasksForListr = [];
 
 const processhtml = (url, htmlContent) => {
   const $ = cheerio.load(htmlContent);
@@ -48,7 +47,8 @@ const loadData = (url, pathToFile) => axios({
   });
 
 const loadhtmlResources = (urls) => {
-  urls.forEach((currentURL) => tasksForListr.push({
+  const tasks = [];
+  urls.forEach((currentURL) => tasks.push({
     title: currentURL.href,
     task: () => {
       log(`streaming ${currentURL.href}`);
@@ -57,7 +57,7 @@ const loadhtmlResources = (urls) => {
       return loadData(currentURL, pathToFile);
     },
   }));
-  return new Listr(tasksForListr, { concurrent: true, exitOnError: false }).run();
+  return tasks;
 };
 
 export default (url, pathToFile = process.cwd()) => axios.get(url)
@@ -69,11 +69,15 @@ export default (url, pathToFile = process.cwd()) => axios.get(url)
     return processhtml(url, response.data);
   })
   .then(([changedhtml, urls]) => {
-    tasksForListr.push({
+    const htmltask = {
       title: url,
       task: () => fs.writeFile(pathForhtml, changedhtml),
-    });
+    };
     return fs.mkdir(pathToDirForhtmlResourses)
       .then(() => loadhtmlResources(urls))
+      .then((tasks) => new Listr(
+        [htmltask, ...tasks],
+        { concurrent: true, exitOnError: false },
+      ).run())
       .then(() => log(`${url} loaded`));
   });
