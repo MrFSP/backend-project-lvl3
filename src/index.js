@@ -18,23 +18,20 @@ let pathToDirForhtmlResourses;
 
 const processhtml = (url, htmlContent) => {
   const $ = cheerio.load(htmlContent);
-  const links = [];
   const urls = [];
   Object.entries(htmlTags).forEach(([tag, attribute]) => {
     $(tag).each((i, elem) => {
       const link = $(elem).attr(attribute);
-      if (link === '/' || !link) {
-        return;
-      }
       const newurl = new URL(link, url);
       urls.push(newurl);
       const newLink = path.join(dirNameForhtmlResouces, createName(newurl.pathname));
       $(elem).attr(attribute, newLink);
-      links.push(link);
     });
   });
+  const filteredurls = urls
+    .filter((currurl) => currurl.pathname !== '/' && currurl.pathname !== '/undefined');
   const changedhtml = $.html();
-  return [changedhtml, _.uniq(urls)];
+  return [changedhtml, _.uniq(filteredurls)];
 };
 
 const loadData = (url, pathToFile) => axios({
@@ -46,19 +43,15 @@ const loadData = (url, pathToFile) => axios({
     response.data.pipe(createWriteStream(pathToFile));
   });
 
-const loadhtmlResources = (urls) => {
-  const tasks = [];
-  urls.forEach((currentURL) => tasks.push({
-    title: currentURL.href,
-    task: () => {
-      log(`streaming ${currentURL.href}`);
-      const fileName = createName(currentURL.pathname);
-      const pathToFile = path.join(pathToDirForhtmlResourses, fileName);
-      return loadData(currentURL, pathToFile);
-    },
-  }));
-  return tasks;
-};
+const loadhtmlResources = (urls) => urls.map((currentURL) => ({
+  title: currentURL.href,
+  task: () => {
+    log(`streaming ${currentURL.href}`);
+    const fileName = createName(currentURL.pathname);
+    const pathToFile = path.join(pathToDirForhtmlResourses, fileName);
+    return loadData(currentURL, pathToFile);
+  },
+}));
 
 export default (url, pathToFile = process.cwd()) => axios.get(url)
   .then((response) => {

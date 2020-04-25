@@ -8,15 +8,17 @@ export const createName = (url, ext = '') => {
     .replace(/(-+)/g, '-')
     .replace(/(-+$|^-+)/g, '')
     .substr(0, 40);
-
-  let result;
-  if (url.indexOf('.')) {
-    const groups = url.split('.');
+  // console.log('url before: ', url);
+  // console.log('url has ?: ', url.indexOf('?') !== -1);
+  let result = url.indexOf('?') !== -1 ? url.replace(/[^\\?]*$/g, '') : url;
+  // console.log('url after: ', result);
+  if (result.indexOf('.')) {
+    const groups = result.split('.');
     const currentExt = groups[groups.length - 1];
-    const firstPart = url.replace(currentExt, '');
+    const firstPart = result.replace(currentExt, '');
     result = `${replacer(firstPart)}${ext === '' ? '.' : '-'}${replacer(currentExt)}${ext}`;
   } else {
-    result = `${replacer(url)}${ext}`;
+    result = `${replacer(result)}${ext}`;
   }
   return result.replace(/(^([^\w])|([^\w])$)/g, '');
 };
