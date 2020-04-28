@@ -12,7 +12,7 @@ const log = debug('tests:');
 
 const origin = new URL('https://testpage.ru');
 const urls = {
-  script: new URL('https://testpage.ru/script'),
+  script: new URL('https://testpage.ru/script?query=value'),
   link: new URL('https://testpage.ru/href/file.css'),
   img: new URL('https://testpage.ru/src!@$%&*()image.jpeg'),
 };
@@ -23,9 +23,9 @@ const nameOfChangedHTMLFile = 'changed-testpage-ru.html';
 const tags = Object.keys(urls);
 
 const namesOfFixtureFiles = {
-  script: 'script',
-  link: 'href-file.css',
-  img: 'src-image.jpeg',
+  script: 'testpage-ru-script',
+  link: 'testpage-ru-href-file-css.css',
+  img: 'testpage-ru-src-image-jpeg.jpeg',
 };
 
 const createPathToFixture = (name) => path
@@ -51,14 +51,14 @@ beforeAll(async () => {
     img: await fs.readFile(pathsToFixtures.img),
   };
   nock(origin.href)
-  // .log(console.log)
+    // .log(console.log)
     .get('/')
     .reply(200, HTMLData)
     .persist();
 
   tags.forEach((tag) => nock(origin.href)
     // .log(console.log)
-    .get(urls[tag].pathname)
+    .get(`${urls[tag].pathname}${urls[tag].search}`)
     .reply(200, fixturesData[tag])
     .persist());
 });
