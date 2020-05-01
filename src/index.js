@@ -24,7 +24,8 @@ const processhtml = (url, htmlContent) => {
       const link = $(elem).attr(attribute);
       const newurl = new URL(link, url);
       urls.push(newurl);
-      const newLink = path.join(dirNameForhtmlResouces, createName(newurl.href, true));
+      // console.log(newurl);
+      const newLink = path.join(dirNameForhtmlResouces, createName(newurl.pathname));
       $(elem).attr(attribute, newLink);
     });
   });
@@ -47,7 +48,7 @@ const loadhtmlResources = (urls) => urls.map((currentURL) => ({
   title: currentURL.href,
   task: () => {
     log(`streaming ${currentURL.href}`);
-    const fileName = createName(currentURL.href, true);
+    const fileName = createName(currentURL.pathname);
     const pathToFile = path.join(pathToDirForhtmlResourses, fileName);
     return loadData(currentURL, pathToFile);
   },
@@ -55,7 +56,8 @@ const loadhtmlResources = (urls) => urls.map((currentURL) => ({
 
 export default (url, pathToFile = process.cwd()) => axios.get(url)
   .then((response) => {
-    const nameFromUrl = createName(url);
+    const fullurl = new URL(url);
+    const nameFromUrl = createName(fullurl.hostname, true);
     const htmlFileName = `${nameFromUrl}.html`;
     pathForhtml = `${pathToFile}/${htmlFileName}`;
     dirNameForhtmlResouces = `${nameFromUrl}_files`;

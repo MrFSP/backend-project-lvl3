@@ -23,9 +23,9 @@ const nameOfChangedHTMLFile = 'changed-testpage-ru.html';
 const tags = Object.keys(urls);
 
 const namesOfFixtureFiles = {
-  script: 'testpage-ru-script',
-  link: 'testpage-ru-href-file-css.css',
-  img: 'testpage-ru-src-image-jpeg.jpeg',
+  script: 'script',
+  link: 'href-file.css',
+  img: 'src-image.jpeg',
 };
 
 const createPathToFixture = (name) => path
